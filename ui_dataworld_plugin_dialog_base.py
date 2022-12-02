@@ -31,13 +31,7 @@ class Ui_DataWorldPluginDialogBase(object):
         self.labelSPARQL.setMinimumSize(QtCore.QSize(108, 0))
         self.labelSPARQL.setObjectName("labelSPARQL")
         self.horizontalLayout_6.addWidget(self.labelSPARQL)
-        self.lineSPARQL = QtWidgets.QComboBox(DataWorldPluginDialogBase)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.lineSPARQL.sizePolicy().hasHeightForWidth())
-        self.lineSPARQL.setSizePolicy(sizePolicy)
-        self.lineSPARQL.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.lineSPARQL = QtWidgets.QLineEdit(DataWorldPluginDialogBase)
         self.lineSPARQL.setObjectName("lineSPARQL")
         self.horizontalLayout_6.addWidget(self.lineSPARQL)
         self.buttonSPARQL = QtWidgets.QToolButton(DataWorldPluginDialogBase)
@@ -86,6 +80,7 @@ class Ui_DataWorldPluginDialogBase(object):
         self.gridLayout.addWidget(self.buttonToken, 2, 0, 1, 1)
 
         self.retranslateUi(DataWorldPluginDialogBase)
+        self.button_box.rejected.connect(DataWorldPluginDialogBase.reject) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(DataWorldPluginDialogBase)
 
     def retranslateUi(self, DataWorldPluginDialogBase):
@@ -95,5 +90,6 @@ class Ui_DataWorldPluginDialogBase(object):
         self.labelSPARQL.setText(_translate("DataWorldPluginDialogBase", "SPARQL File"))
         self.buttonSPARQL.setText(_translate("DataWorldPluginDialogBase", "..."))
         self.camada_2.setText(_translate("DataWorldPluginDialogBase", "Layer"))
+        self.lineLayer.setText(_translate("DataWorldPluginDialogBase", "layer_name"))
         self.atributos_2.setText(_translate("DataWorldPluginDialogBase", "Attributes"))
         self.buttonToken.setText(_translate("DataWorldPluginDialogBase", "Apply"))

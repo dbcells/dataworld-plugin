@@ -42,20 +42,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="lineSPARQL">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-        </widget>
+        <widget class="QLineEdit" name="lineSPARQL"/>
        </item>
        <item>
         <widget class="QToolButton" name="buttonSPARQL">
@@ -94,6 +81,9 @@
            <width>16777215</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="text">
+          <string>layer_name</string>
          </property>
         </widget>
        </item>
@@ -149,5 +139,22 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>button_box</sender>
+   <signal>rejected()</signal>
+   <receiver>DataWorldPluginDialogBase</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>491</x>
+     <y>423</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>232</x>
+     <y>434</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

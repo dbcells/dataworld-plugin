@@ -23,9 +23,9 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QComboBox, QCheckBox,QLineEdit, QTableWidgetItem
+from qgis.PyQt.QtWidgets import QAction, QComboBox, QCheckBox,QLineEdit, QTableWidgetItem, QFileDialog
 
-from qgis.core import QgsVectorLayer, QgsField, QgsGeometry, QgsFeature, QgsProject
+from qgis.core import QgsVectorLayer, QgsField, QgsGeometry, QgsFeature, QgsProject,  Qgis
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -247,7 +247,7 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
         
         self.dlg.button_box.accepted.connect(self.execute)
         self.dlg.buttonToken.clicked.connect(self.set_token)
-        self.dlg.buttonSPARQL.clicked.connect(self.fill_table)
+        self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
 
         # show the dialog
         self.dlg.show()
@@ -276,13 +276,17 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
 
             item = self.dlg.tableAttributes.item(row, 3)
             var_name = item.text()
-            print (var_name)
+        
 
-            check = self.dlg.tableAttributes.cellWidget(row, 0) 
+            check_id = self.dlg.tableAttributes.cellWidget(row, 1)
+            if (check_id.isChecked()):
+                self.id_column = attr_name
+
             check_geo = self.dlg.tableAttributes.cellWidget(row, 2)
             if (check_geo.isChecked()):
                 self.geo_column = attr_name
 
+            check = self.dlg.tableAttributes.cellWidget(row, 0) 
             if check.isChecked():
                 combo_type = self.dlg.tableAttributes.cellWidget(row, 5)
                 self.saveAttrs.append((attr_name, dic_attr_type[combo_type.currentText()], var_name ))
@@ -295,7 +299,7 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
         #ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
 
         # create layer
-        layer = QgsVectorLayer('Polygon?crs=epsg:4326?field=id:string','GridSA025Graus',"memory")
+        layer = QgsVectorLayer('Polygon?crs=epsg:4326?field='+self.id_column,self.dlg.lineLayer.text(),"memory")
         pr = layer.dataProvider()
         layer.startEditing()
 
@@ -328,23 +332,23 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
         layer.commitChanges()
         QgsProject.instance().addMapLayer(layer)
 
-        """
-        print(len (results["results"]["bindings"]))
-        for r in results["results"]["bindings"]:
-            fet = QgsFeature()
-            fet.setGeometry( QgsGeometry.fromWkt ( r["pol"]["value"])  )
-            fet.setAttributes([  r["cell"]["value"]  ])
-            layer.addFeatures([fet])
-            layer.updateExtents()
-            
-        
-        layer.commitChanges()
-        QgsProject.instance().addMapLayer(layer)
-        """
 
-    def fill_table(self):
-        print (s)
-        #tokens = s.replace('\n', ' ').upper().split(" ")
+        self.iface.messageBar().pushMessage(
+            "Success", "Imported layer",
+            level=Qgis.Success, duration=3
+        )
+
+
+    def open_sparql (self):
+        
+        self.file_name=str(QFileDialog.getOpenFileName(caption="Defining input file", filter="SPARQL(*.sparql)")[0])
+        self.dlg.lineSPARQL.setText(self.file_name)
+        with open(self.file_name, 'r') as file:
+            data = file.read()
+            self.fill_table(data)
+
+    def fill_table(self, s): 
+
         tokens = s.replace('\n', ' ').split(" ")
         tokens = list(filter(lambda x: x != '', tokens))
         print (tokens)
