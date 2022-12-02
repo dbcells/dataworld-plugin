@@ -23,7 +23,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QComboBox, QCheckBox,QLineEdit, QTableWidgetItem
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -50,6 +50,29 @@ except:
 
 
 
+s = '''
+PREFIX amz: <http://purl.org/ontology/dbcells/amazon#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dbco: <http://purl.org/ontology/dbcells/cells#>
+PREFIX qb: <http://purl.org/linked-data/cube/>
+PREFIX lc: <http://purl.org/landchange/amazon/>
+PREFIX dbce: <http://www.dbcells.org/epsg4326/>
+PREFIX amz: <http://purl.org/ontology/dbcells/amazon> 
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+
+SELECT ?obs ?wkt ?agric ?forest ?uriCell
+where {
+    ?obs a qb:Observation.
+    ?obs amz:agric ?agric.
+    ?obs amz:veg ?forest.
+    ?obs sdmx:refArea ?uriCell.
+    SERVICE <https://dbcells-staging.herokuapp.com/cells> {
+        ?uriCell geo:asWKT ?wkt.
+    }
+}
+limit 25
+
+'''
 
 
 class DataWorldPlugin:
@@ -88,7 +111,7 @@ class DataWorldPlugin:
         self.first_start = None
 
         
-        #os.environ['DW_AUTH_TOKEN'] = '' # estudar qual melhor forma de setar esse token
+        
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -214,6 +237,8 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
 
         
         self.dlg.button_box.accepted.connect(self.execute)
+        self.dlg.buttonToken.clicked.connect(self.set_token)
+        self.dlg.buttonSPARQL.clicked.connect(self.fill_table)
 
         # show the dialog
         self.dlg.show()
@@ -226,7 +251,34 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
             pass
 
     def execute (self):
-        ds = dw.load_dataset('landchangedata/novoprojeto', force_update=True)
-        table = ds.dataframes["dados_temporais_3"]
-        print (os.environ['DW_AUTH_TOKEN'])
+        ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
+        table = ds.dataframe
         print (table)
+
+
+    def fill_table(self):
+        print (s)
+        tokens = s.replace('\n', ' ').upper().split(" ")
+        tokens = list(filter(lambda x: x != '', tokens))
+        print (tokens)
+        start = tokens.index('SELECT') + 1
+        end = tokens.index('WHERE') 
+        attributes = tokens[start:end] #identificar os atributos
+        attributes = list(map (lambda x: x[1:], attributes))
+        print (attributes)
+        
+        self.dlg.tableAttributes.setRowCount(len(attributes))
+        self.dlg.tableAttributes.setColumnCount(5)
+        self.dlg.tableAttributes.setHorizontalHeaderLabels(["Import?", "IDColumn?", "GeoColumn?", "Variable", "Attribute name"])
+
+        start = 0
+        for attr in attributes:
+            self.dlg.tableAttributes.setCellWidget(start, 0, QCheckBox())
+            self.dlg.tableAttributes.setCellWidget(start, 1, QCheckBox())
+            self.dlg.tableAttributes.setCellWidget(start, 2, QCheckBox())
+            self.dlg.tableAttributes.setItem(start, 3, QTableWidgetItem(attr))
+            self.dlg.tableAttributes.setCellWidget(start, 4, QLineEdit(attr))
+            start += 1
+
+    def set_token(self):
+        os.environ['DW_AUTH_TOKEN'] = self.dlg.lineToken.text()
