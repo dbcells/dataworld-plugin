@@ -113,7 +113,7 @@ class DataWorldPlugin:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&DataWorld Plugin')
+        self.menu = self.tr(u'&DBCells')
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -204,7 +204,7 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
             self.iface.addToolBarIcon(action)
 
         if add_to_menu:
-            self.iface.addPluginToMenu(
+            self.iface.addPluginToVectorMenu(
                 self.menu,
                 action)
 
@@ -229,8 +229,8 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(
-                self.tr(u'&DataWorld Plugin'),
+            self.iface.removePluginVectorMenu(
+                self.tr(u'&DBCells'),
                 action)
             self.iface.removeToolBarIcon(action)
 
