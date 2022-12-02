@@ -274,6 +274,10 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
             line_edit = self.dlg.tableAttributes.cellWidget(row, 4)
             attr_name = line_edit.text()
 
+            item = self.dlg.tableAttributes.item(row, 3)
+            var_name = item.text()
+            print (var_name)
+
             check = self.dlg.tableAttributes.cellWidget(row, 0) 
             check_geo = self.dlg.tableAttributes.cellWidget(row, 2)
             if (check_geo.isChecked()):
@@ -281,7 +285,7 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
 
             if check.isChecked():
                 combo_type = self.dlg.tableAttributes.cellWidget(row, 5)
-                self.saveAttrs.append((attr_name, dic_attr_type[combo_type.currentText()] ))
+                self.saveAttrs.append((attr_name, dic_attr_type[combo_type.currentText()], var_name ))
         
         print (self.saveAttrs)      
         print (self.geo_column)          
@@ -313,7 +317,7 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
             fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]) )
             attrs = []
             for attr in self.saveAttrs:
-                attrs.append(row[attr[0]])
+                attrs.append(row[attr[2]])
             fet.setAttributes(attrs)
             features.append(fet)
             i =+ 1
