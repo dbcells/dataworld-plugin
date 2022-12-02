@@ -295,10 +295,10 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
         pr = layer.dataProvider()
         layer.startEditing()
 
-        attributes = map (lambda x: QgsField (x[0], x[1]), self.saveAttrs)
-        print (list(attributes))
-        #pr.addAttributes(list(attributes))
-        pr.addAttributes([QgsField("id", QVariant.String )])
+        attributes = [ QgsField (x[0], x[1] ) for x in  self.saveAttrs  ] # não funcionou com o map ???
+        
+        print (attributes)
+        pr.addAttributes(attributes)
         layer.updateFields()
         features = []
 
@@ -310,18 +310,11 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
         i = 0
         for index, row in df.iterrows():
             fet = QgsFeature()
-            #print ("geo", self.geo_column)
-            #print (row[self.geo_column])
-            #print ("geo", self.geo_column)
             fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]) )
-            #print (fet.geometry().asWkt())
             attrs = []
             for attr in self.saveAttrs:
                 attrs.append(row[attr[0]])
-            #print ("________")
-            #print (attrs)
             fet.setAttributes(attrs)
-            #fet.setAttributes([  str(i)])
             features.append(fet)
             i =+ 1
         layer.addFeatures(features)
