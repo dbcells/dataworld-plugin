@@ -53,7 +53,7 @@ except:
 
 
 
-s = '''
+s2 = '''
 PREFIX amz: <http://purl.org/ontology/dbcells/amazon#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dbco: <http://purl.org/ontology/dbcells/cells#>
@@ -310,7 +310,7 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
         layer.updateFields()
         features = []
 
-        ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
+        ds = dw.query(self.dlg.lineDataset.text(), self.sparql, query_type='sparql')
         df = ds.dataframe
 
         df = df.reset_index()  # make sure indexes pair with number of rows
@@ -345,6 +345,7 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
         self.dlg.lineSPARQL.setText(self.file_name)
         with open(self.file_name, 'r') as file:
             data = file.read()
+            self.sparql = data
             self.fill_table(data)
 
     def fill_table(self, s): 
