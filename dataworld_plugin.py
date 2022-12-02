@@ -21,15 +21,18 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QComboBox, QCheckBox,QLineEdit, QTableWidgetItem
+
+from qgis.core import QgsVectorLayer, QgsField, QgsGeometry, QgsFeature, QgsProject
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .dataworld_plugin_dialog import DataWorldPluginDialog
 import os.path
+
 
 import os
 
@@ -60,12 +63,12 @@ PREFIX dbce: <http://www.dbcells.org/epsg4326/>
 PREFIX amz: <http://purl.org/ontology/dbcells/amazon> 
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 
-SELECT ?obs ?wkt ?agric ?forest ?uriCell
-where {
-    ?obs a qb:Observation.
-    ?obs amz:agric ?agric.
-    ?obs amz:veg ?forest.
-    ?obs sdmx:refArea ?uriCell.
+SELECT ?id ?wkt ?agric ?forest ?uriCell
+WHERE {
+    ?id a qb:Observation.
+    ?id amz:agric ?agric.
+    ?id amz:veg ?forest.
+    ?id sdmx:refArea ?uriCell.
     SERVICE <https://dbcells-staging.herokuapp.com/cells> {
         ?uriCell geo:asWKT ?wkt.
     }
@@ -74,6 +77,12 @@ limit 25
 
 '''
 
+dic_attr_type = {
+    "String": QVariant.String,
+    "Int": QVariant.Int,
+    "Double": QVariant.Double,
+
+}
 
 class DataWorldPlugin:
     """QGIS Plugin Implementation."""
@@ -251,25 +260,107 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
             pass
 
     def execute (self):
-        ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
-        table = ds.dataframe
-        print (table)
+        #ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
+        #table = ds.dataframe
+        #print (table)
+        self.check_attributes()
+        self.import_layer()
 
+    def check_attributes(self):
+        #
+        self.geo_column = ""
+        self.saveAttrs = []
+        for row in range(self.dlg.tableAttributes.rowCount()): 
+            line_edit = self.dlg.tableAttributes.cellWidget(row, 4)
+            attr_name = line_edit.text()
+
+            check = self.dlg.tableAttributes.cellWidget(row, 0) 
+            check_geo = self.dlg.tableAttributes.cellWidget(row, 2)
+            if (check_geo.isChecked()):
+                self.geo_column = attr_name
+
+            if check.isChecked():
+                combo_type = self.dlg.tableAttributes.cellWidget(row, 5)
+                self.saveAttrs.append((attr_name, dic_attr_type[combo_type.currentText()] ))
+        
+        print (self.saveAttrs)      
+        print (self.geo_column)          
+
+    def import_layer(self):
+
+        #ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
+
+        # create layer
+        layer = QgsVectorLayer('Polygon?crs=epsg:4326?field=id:string','GridSA025Graus',"memory")
+        pr = layer.dataProvider()
+        layer.startEditing()
+
+        attributes = map (lambda x: QgsField (x[0], x[1]), self.saveAttrs)
+        print (list(attributes))
+        #pr.addAttributes(list(attributes))
+        pr.addAttributes([QgsField("id", QVariant.String )])
+        layer.updateFields()
+        features = []
+
+        ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
+        df = ds.dataframe
+
+        df = df.reset_index()  # make sure indexes pair with number of rows
+        features = []
+        i = 0
+        for index, row in df.iterrows():
+            fet = QgsFeature()
+            #print ("geo", self.geo_column)
+            #print (row[self.geo_column])
+            #print ("geo", self.geo_column)
+            fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]) )
+            #print (fet.geometry().asWkt())
+            attrs = []
+            for attr in self.saveAttrs:
+                attrs.append(row[attr[0]])
+            #print ("________")
+            #print (attrs)
+            fet.setAttributes(attrs)
+            #fet.setAttributes([  str(i)])
+            features.append(fet)
+            i =+ 1
+        layer.addFeatures(features)
+        layer.updateExtents()
+
+
+        layer.commitChanges()
+        QgsProject.instance().addMapLayer(layer)
+
+        """
+        print(len (results["results"]["bindings"]))
+        for r in results["results"]["bindings"]:
+            fet = QgsFeature()
+            fet.setGeometry( QgsGeometry.fromWkt ( r["pol"]["value"])  )
+            fet.setAttributes([  r["cell"]["value"]  ])
+            layer.addFeatures([fet])
+            layer.updateExtents()
+            
+        
+        layer.commitChanges()
+        QgsProject.instance().addMapLayer(layer)
+        """
 
     def fill_table(self):
         print (s)
-        tokens = s.replace('\n', ' ').upper().split(" ")
+        #tokens = s.replace('\n', ' ').upper().split(" ")
+        tokens = s.replace('\n', ' ').split(" ")
         tokens = list(filter(lambda x: x != '', tokens))
         print (tokens)
-        start = tokens.index('SELECT') + 1
-        end = tokens.index('WHERE') 
+        tokens_upper = list(map (lambda x: x.upper(), tokens))
+        start = tokens_upper.index('SELECT') + 1
+        end = tokens_upper.index('WHERE') 
         attributes = tokens[start:end] #identificar os atributos
         attributes = list(map (lambda x: x[1:], attributes))
         print (attributes)
         
         self.dlg.tableAttributes.setRowCount(len(attributes))
-        self.dlg.tableAttributes.setColumnCount(5)
-        self.dlg.tableAttributes.setHorizontalHeaderLabels(["Import?", "IDColumn?", "GeoColumn?", "Variable", "Attribute name"])
+        self.dlg.tableAttributes.setColumnCount(6)
+        self.dlg.tableAttributes.setHorizontalHeaderLabels(["Import?", "IDColumn?", "GeoColumn?", "Variable", "Attribute name", "Attribute type"])
 
         start = 0
         for attr in attributes:
@@ -278,6 +369,11 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
             self.dlg.tableAttributes.setCellWidget(start, 2, QCheckBox())
             self.dlg.tableAttributes.setItem(start, 3, QTableWidgetItem(attr))
             self.dlg.tableAttributes.setCellWidget(start, 4, QLineEdit(attr))
+            comboBox = QComboBox()
+            comboBox.addItem("String")
+            comboBox.addItem("Int")
+            comboBox.addItem("Double")
+            self.dlg.tableAttributes.setCellWidget(start, 5, comboBox)
             start += 1
 
     def set_token(self):
