@@ -245,9 +245,9 @@ self.dlg.buttonBox.accepted.connect(self.saveFile)
             self.dlg = DataWorldPluginDialog()
 
         
-        self.dlg.button_box.accepted.connect(self.execute)
-        self.dlg.buttonToken.clicked.connect(self.set_token)
-        self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
+            self.dlg.button_box.accepted.connect(self.execute)
+            self.dlg.buttonToken.clicked.connect(self.set_token)
+            self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
 
         # show the dialog
         self.dlg.show()
