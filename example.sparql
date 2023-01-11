@@ -4,7 +4,6 @@ PREFIX dbco: <http://purl.org/ontology/dbcells/cells#>
 PREFIX qb: <http://purl.org/linked-data/cube/>
 PREFIX lc: <http://purl.org/landchange/amazon/>
 PREFIX dbce: <http://www.dbcells.org/epsg4326/>
-PREFIX amz: <http://purl.org/ontology/dbcells/amazon> 
 PREFIX geo: <http://www.opengis.net/ont/geosparql#>
 
 SELECT ?id ?wkt ?agric ?forest ?uriCell
@@ -15,6 +14,7 @@ WHERE {
     ?id sdmx:refArea ?uriCell.
     SERVICE <https://dbcells-staging.herokuapp.com/cells> {
         ?uriCell geo:asWKT ?wkt.
+        ?uriCell <http://purl.org/linked-data/sdmx/2009/dimension#refArea> "AC".
     }
 }
 limit 25
